@@ -1,7 +1,7 @@
 ###############
 # Chironomidae Biogeography Pipeline
 
-# Authored by Matthew G. Orton and Sarah J. Adamowicz
+# Authored by Matthew G. Orton and Sally J. Adamowicz
 
 # Credit to Torbjorn Ekrem and Elisabeth Ster for private Chironomidae data and some of the public
 # Chironomidae data from BOLD and for helping us on the function of the code and plots.
