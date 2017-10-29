@@ -6,6 +6,9 @@
 # Credit to Torbjorn Ekrem and Elisabeth Ster for private Chironomidae data and some of the public
 # Chironomidae data from BOLD and for helping us on the function of the code and plots.
 
+# ***Note: to get all components of code to work, ensure that all Arctic zone files and the Private data csv are within the
+# same current working R directory.***
+
 ##############
 # Packages
 # install.packages("foreach")
