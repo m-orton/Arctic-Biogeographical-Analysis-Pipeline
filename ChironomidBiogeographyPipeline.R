@@ -36,6 +36,8 @@ require(ggplot2)
 library(raster)
 # install.packages("rgdal")
 library(rgdal)
+# install.packages("rgeos")
+library(rgeos)
 
 ##############
 # Parsing from BOLD
@@ -87,25 +89,12 @@ lonNum <- with(dfChironomid, as.numeric(as.character(lon)))
 dfChironomid$lonNum <- lonNum
 
 ##############
-# Subarctic Filtering - filter any points below subartic line using subartic shapefile
-
-rawShapefile <- shapefile("Arctic_Zones")
-subarcticZone <- rawShapefile[3]
-
-# Can show a plot of the subarctic zone using the shapefile and geom_polygon
-p <- ggplot()+geom_polygon(data=subarcticZone, aes(x=long, y=lat, group=group),
-                      fill="cadetblue", color="grey")#+
-  #geom_point(data = dfAccPalearctic, aes(x = dfAccPalearctic$lonNum, y = dfChironomid$latNum), color = "black", size = 1) 
-subarcticPlot <- ggplotly(p)
-
-# Note that the plot scale is not in lat/lon but in UTM (Universal Transmercator units)
-subarcticPlot
-
-
-# For now just filtering above 55 degrees lat to make the dataset more manageable
+# Subarctic Filtering - For now just filtering above 55 degrees lat to make the dataset more manageable
 # ***Only doing this for testing purposes***
 latCheck <- which(dfChironomid$latNum>=55)
 dfChironomid <- dfChironomid[latCheck,]
+
+# ***See down further for filtering according to shapefile with private data included***
 
 ##############
 # Select One Sequence per BIN - selecting sequence closest to 658 bp (can be changed)
@@ -296,6 +285,45 @@ dfChironomid <- (dfChironomid[,c("globalRegion","bin_uri","subfamily_name","latN
 
 dfChironomidAll <- rbind(dfPrivateData, dfChironomid)
 
+##############
+# Subarctic filtering according to subarctic shapefile
+
+# Subarctic filtering of all data including private data
+# Read in the subarctic shapefile
+rawShapefile <- shapefile("Arctic_Zones")
+subarcticZone <- rawShapefile[3]
+
+# Loading required package sp to make a spatial points dataframe from our coordinate data
+library(sp)
+xy <- data.frame(ID = dfChironomidAll$bin_uri, X = dfChironomidAll$lonNum, Y = dfChironomidAll$latNum)
+coordinates(xy) <- c("X", "Y")
+proj4string(xy) <- CRS("+proj=longlat +datum=WGS84")
+# Have to convert to epsg:3408 - its a northern map view with UTM coordinates
+convertUTM <- spTransform(xy, CRS("+init=epsg:3408"))
+
+# Transform our shapefile
+subarcticZone <- spTransform(subarcticZone, CRSobj = "+init=epsg:3408")
+
+# Projection of each spatial dataframe
+projection(convertUTM) 
+projection(subarcticZone) 
+
+# Find which points overlap, commands may take a while:
+pointOverlap <- sp::over(convertUTM, subarcticZone, fn = NULL)
+pointOverlaprgeos <- rgeos::gIntersection(convertUTM, subarcticZone)
+
+# Plot points in polygon, points within the polygon plot green
+plot(subarcticZone)
+plot(convertUTM, pch = 19, cex = 1, add = TRUE)
+plot(pointOverlaprgeos, pch = 19, cex = 0.5, col = 'green', add = TRUE)
+box()
+
+# Append pointOverlap to dfChironomidAll
+dfChironomidAll$shapeLen <- pointOverlap$Shape_Leng
+withinPoly <- grep( "[0-9]", dfChironomidAll$shapeLen)
+# Filter by subarctic zone!
+dfChironomidAll <- dfChironomidAll[withinPoly,]
+
 #############
 # Accumulation Curve Analysis
 
@@ -462,25 +490,23 @@ dfRegion <- data.frame(combinedRegions)
 dfRegion$region <- names(combinedRegions)
 
 # Plot title
-pRegionTitle = "Accumuluation Curves for Chironomidae Subarctic Regions - 5 replicates"
+pRegionTitle = "Accumuluation Curves for Chironomidae Subarctic Regions - 5 replicates, Filtered by Subarctic"
 
 # Making a plot for the region and storing in a variable
-pRegion <- plot_ly(data = dfRegion, y = dfRegion$combinedRegions, color = region, type = "scatter", mode = "markers") %>%
+pRegion <- plot_ly(data = dfRegion, y = dfRegion$combinedRegions, color = dfRegion$region, type = "scatter", mode = "markers") %>%
   layout(title = paste0(pRegionTitle))
   
-plot_ly(data = dfRegion, y = dfRegion$combinedRegions, color = region, type = "scatter", mode = "markers") %>%
-  layout(title = paste0(pRegionTitle))
+pRegion
 
 # Truncated Plot of Accumulation according to region
-pRegionTitle2 = "Accumuluation Curves for Chironomidae Subarctic Regions - 5 replicates, Truncated"
+pRegionTitle2 = "Accumuluation Curves for Chironomidae Subarctic Regions - 5 replicates, Truncated and Filtered by Subarctic"
 
-pRegion2 <- plot_ly(data = dfRegion, y = dfRegion$combinedRegions, color = region, type = "scatter", mode = "markers") %>%
-  layout(title = paste0(pRegionTitle2), xaxis = list(range = c(0, 20000)))
+pRegion2 <- plot_ly(data = dfRegion, y = dfRegion$combinedRegions, color = dfRegion$region, type = "scatter", mode = "markers") %>%
+  layout(title = paste0(pRegionTitle2), xaxis = list(range = c(0, 2000)))
 
-plot_ly(data = dfRegion, y = dfRegion$combinedRegions, color = region, type = "scatter", mode = "markers") %>%
-  layout(title = paste0(pRegionTitle2), xaxis = list(range = c(0, 20000)))
+pRegion2
 
-# mean BIN per major subfamily on same plot
+# mean BIN per major subfamily on same plot 
 
 # First finding the subfamilies
 unique(dfChironomidAll$subfamily_name)
