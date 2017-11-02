@@ -38,6 +38,12 @@ library(raster)
 library(rgdal)
 # install.packages("rgeos")
 library(rgeos)
+# install.packages("vegan")
+library(vegan)
+# install.packages("tidyr")
+library(tidyr)
+# install.packages("dplyr")
+library(dplyr)
 
 ##############
 # Parsing from BOLD
@@ -87,14 +93,6 @@ latNum <- with(dfChironomid, as.numeric(as.character(lat)))
 dfChironomid$latNum <- latNum
 lonNum <- with(dfChironomid, as.numeric(as.character(lon))) 
 dfChironomid$lonNum <- lonNum
-
-##############
-# Subarctic Filtering - For now just filtering above 55 degrees lat to make the dataset more manageable
-# ***Only doing this for testing purposes***
-latCheck <- which(dfChironomid$latNum>=55)
-dfChironomid <- dfChironomid[latCheck,]
-
-# ***See down further for filtering according to shapefile with private data included***
 
 ##############
 # Select One Sequence per BIN - selecting sequence closest to 658 bp (can be changed)
@@ -216,10 +214,6 @@ dfOutlier3 <- dfOutlierCheck[outlier3,]
 # outliers, 19 at 1.5 and 4 at 3, each should have its own dataframe with
 # BINs listed that we can show to Elisabeth to see what she thinks
 
-# *** Upon checking with Elisabeth, the only BIN that we should eliminate is ACZ1013:
-binCheck <- which(dfChironomid$bin_uri == "BOLD:ACZ1013")
-dfChironomid <- dfChironomid[-binCheck,]
-
 ##############
 # Reading in and filtering of private data for use in mapping and analyses, can assume we can 
 # skip the outlier check with the private data?
@@ -257,25 +251,33 @@ for(i in seq(from = 1, to = nrow(dfPrivateData), by = 1)) {
   }
 }
 
-# Conversion to numeric coordinates:
+# Check if there is any intersection between dfPrivate data and dfChrionomid for sample ID
+sampleIdIntersect <- intersect(dfPrivateData$Sample.ID, dfChironomid$sampleid)
+
+# Process ID
+processIdIntersect <- intersect(dfPrivateData$Process.ID, dfChironomid$processid)
+
+# Same number of elements in both - 2418, will subset dfChironomid for the duplicate records
+# by sampleID
+duplicateSubset <- which(dfChironomid$sampleid %in% sampleIdIntersect)
+dfChironomid <- dfChironomid[-duplicateSubset,]
+
+# Conversion to numeric coordinates for private data:
 latNum <- with(dfPrivateData, as.numeric(as.character(Lat))) 
 dfPrivateData$latNum <- latNum
 lonNum <- with(dfPrivateData, as.numeric(as.character(Lon))) 
 dfPrivateData$lonNum <- lonNum
 
-# Filtering again according to the shapefile
-
-
 # Combining private data with dfChironomid and excluding unecessary columns for the analysis
 # and mapping
-colnames(dfPrivateData)[4] <- "subfamily_name"
-colnames(dfPrivateData)[24] <- "collectors"
-colnames(dfPrivateData)[26] <- "country"
-colnames(dfPrivateData)[27] <- "province_state"
-colnames(dfPrivateData)[28] <- "region"
-colnames(dfPrivateData)[29] <- "sector"
-colnames(dfPrivateData)[30] <- "exactsite"
-colnames(dfPrivateData)[47] <- "bin_uri"
+colnames(dfPrivateData)[5] <- "subfamily_name"
+colnames(dfPrivateData)[25] <- "collectors"
+colnames(dfPrivateData)[27] <- "country"
+colnames(dfPrivateData)[28] <- "province_state"
+colnames(dfPrivateData)[29] <- "region"
+colnames(dfPrivateData)[30] <- "sector"
+colnames(dfPrivateData)[31] <- "exactsite"
+colnames(dfPrivateData)[48] <- "bin_uri"
 
 dfPrivateData <- (dfPrivateData[,c("globalRegion","bin_uri","subfamily_name","latNum","lonNum",
                                    "country","province_state","region","sector","exactsite","collectors")])
@@ -283,7 +285,12 @@ dfPrivateData <- (dfPrivateData[,c("globalRegion","bin_uri","subfamily_name","la
 dfChironomid <- (dfChironomid[,c("globalRegion","bin_uri","subfamily_name","latNum","lonNum",
                                  "country","province_state","region","sector","exactsite","collectors")])
 
+# Combine both dataframes together
 dfChironomidAll <- rbind(dfPrivateData, dfChironomid)
+
+# *** Upon checking with Elisabeth, the only BIN that we should eliminate is ACZ1013:
+binCheck <- which(dfChironomidAll$bin_uri == "BOLD:ACZ1013")
+dfChironomidAll <- dfChironomidAll[-binCheck,]
 
 ##############
 # Subarctic filtering according to subarctic shapefile
@@ -489,41 +496,114 @@ combinedRegions <- append(combinedRegions, meanBINNearctic)
 dfRegion <- data.frame(combinedRegions)
 dfRegion$region <- names(combinedRegions)
 
-# Plot title
-pRegionTitle = "Accumuluation Curves for Chironomidae Subarctic Regions - 5 replicates, Filtered by Subarctic"
+# Removed the title since it will be included in the figure legend
+
+# X and Y axis 
+f <- list(
+  family = "sans-serif",
+  size = 18,
+  color = "#7f7f7f"
+)
+
+f2 <- list(
+  family = "sans-serif",
+  size = 13,
+  color = "#7f7f7f"
+)
+
+x <- list(
+  title = "Number of Specimens Barcoded",
+  titlefont = f,
+  tickfont = f2
+)
+
+y <- list(
+  title = "Number of Barcode Index Numbers (BIN)",
+  titlefont = f,
+  tickfont = f2
+)
+
+# Legend
+l <- list(
+  font = list(
+    family = "sans-serif",
+    size = 16,
+    color = "#000"),
+  bgcolor = "#E2E2E2",
+  bordercolor = "#FFFFFF",
+  borderwidth = 2)
 
 # Making a plot for the region and storing in a variable
 pRegion <- plot_ly(data = dfRegion, y = dfRegion$combinedRegions, color = dfRegion$region, type = "scatter", mode = "markers") %>%
-  layout(title = paste0(pRegionTitle))
+  layout(xaxis = x, yaxis = y, legend = l)
   
 pRegion
 
-# Truncated Plot of Accumulation according to region
-pRegionTitle2 = "Accumuluation Curves for Chironomidae Subarctic Regions - 5 replicates, Truncated and Filtered by Subarctic"
+# Truncated Plot of Accumulation according to region, truncated by smallest region Palearctic
+x2 <- list(
+  title = "No. of Specimens Barcoded",
+  titlefont = f,
+  tickfont = f2,
+  range = c(0, 1600)
+)
 
 pRegion2 <- plot_ly(data = dfRegion, y = dfRegion$combinedRegions, color = dfRegion$region, type = "scatter", mode = "markers") %>%
-  layout(title = paste0(pRegionTitle2), xaxis = list(range = c(0, 2000)))
+  layout(xaxis = x2, yaxis = y, legend = l)
 
 pRegion2
 
-# mean BIN per major subfamily on same plot 
-
-# First finding the subfamilies
-unique(dfChironomidAll$subfamily_name)
-
-
 #############
-# Vegan
+# Dplyr/Tidyr and Vegan
 
-# possibly useful package to consider. However, the data format is different from ours.
-# So, we would need to consider that before we pursue vegan for our further analyses.
-# install.packages("vegan")
-# library(vegan)
+# First separate bin_uri and global region from other columns
+dfNSubset <- (dfAccNearctic[,c("globalRegion","bin_uri")])
+dfPSubset <- (dfAccPalearctic[,c("globalRegion","bin_uri")])
+dfGSubset <- (dfAccGreenland[,c("globalRegion","bin_uri")])
 
+# Group by BIN
+nearcticGroup <- group_by(dfNSubset, bin_uri)
+palearcticGroup <- group_by(dfPSubset, bin_uri)
+greenlandGroup <- group_by(dfGSubset, bin_uri)
 
+# BIN counts per region
+countsN <- summarize(nearcticGroup, count = n())
+countsP <- summarize(palearcticGroup, count = n())
+countsG <- summarize(greenlandGroup, count = n())
+
+# Assign regions again - ***gives a warning but does work***
+for (i in 1:nrow(countsN)){
+ countsN$region[i] <- "Nearctic"
+}
+for (i in 1:nrow(countsP)){
+  countsP$region[i] <- "Palearctic"
+}
+for (i in 1:nrow(countsG)){
+  countsG$region[i] <- "Greenland"
+}
+
+# Combine together again - now its in the right format for spread function
+countsAll <- rbind(countsN, countsP, countsG)
+
+# First converting to the right format using tidyr
+counts_spread <- spread(countsAll, key = bin_uri, value = count)
+
+# If NA in a cell - assign a 0
+counts_spread[is.na(counts_spread)] <- 0
+
+# Make the region column the rowname
+counts_spread1 <- counts_spread[,-1]
+row.names(counts_spread1) <- counts_spread$region
+
+# Dissimilarity measure using chao
+chao <- vegdist(counts_spread1, method="chao")
+chao
+
+# Dissimilarity measure using cao
+cao <- vegdist(counts_spread1, method="cao")
+cao
 
 ###############
-# Plot on plotly after Vegan analysis
+# Plot on plotly after Vegan analysis 
 
 # Also allows visualization of where points may be located
 
@@ -546,13 +626,13 @@ mapLayout <- list(
   resolution = list(type = '50'),
   projection = list(type = 'transverse mercator'),
   lonaxis = list(
-    range = list(range = c(-157, 23)),
+    #range = c(30, -160),
     showgrid = TRUE,
     gridcolor = toRGB("gray40"),
     gridwidth = 0.5
   ),
   lataxis = list(
-    range = list(range = c(55, 90)),
+    #range = c(50, 90),
     showgrid = TRUE,
     gridcolor = toRGB("gray40"),
     gridwidth = 0.5
@@ -573,8 +653,7 @@ dfChironomidAll$hover <-
         "Collectors:",dfChironomidAll$collectors,
         sep = "<br>")
 
-# Title for the map
-mapTitle <- paste("Subarctic Zone Chironomidae Records per Region")
+# Got rid of the title since it will be included in the figure legend
 
 # This command will ensure the pairing results dataframe can be read by plotly.
 attach(dfChironomidAll)
@@ -583,4 +662,20 @@ attach(dfChironomidAll)
 plot_ly(dfChironomidAll, lat = dfChironomidAll$latNum, lon = dfChironomidAll$lonNum, 
         text = hover, color = globalRegion,
         mode = "markers", type = 'scattergeo') %>%
-  layout(title = paste0(mapTitle) , geo = mapLayout)
+  layout(title = paste0(mapTitle) , geo = mapLayout) %>%
+
+##############
+# Venn Diagram of BINs
+
+# Counts for each circle
+A <- length(unique(dfAccGreenland$bin_uri))
+B <- length(unique(dfAccNearctic$bin_uri))
+C <- length(unique(dfAccPalearctic$bin_uri))
+
+# Counts for each overlap region
+AB <- length(intersect(dfAccGreenland$bin_uri, dfAccNearctic$bin_uri))
+AC <- length(intersect(dfAccGreenland$bin_uri, dfAccPalearctic$bin_uri))
+BC <- length(intersect(dfAccNearctic$bin_uri, dfAccPalearctic$bin_uri))
+ABC <- length(intersect(intersect(dfAccGreenland$bin_uri, dfPalearctic$bin_uri), dfNearctic$bin_uri))
+
+# Still trying to find a good package to plot this
