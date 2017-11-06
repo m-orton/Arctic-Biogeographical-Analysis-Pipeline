@@ -406,7 +406,7 @@ length(unique(dfAccNearctic$bin_uri))
 meanBINNearctic <- array (NA,dim=c(length(dfAccNearctic$bin_uri))-1)
 
 # Reducing dfAccNearctic to just the BIN column
-dfAccNearctic1 <- dfNearctic$bin_uri
+dfAccNearctic1 <- dfAccNearctic$bin_uri
 dfAccNearctic1
 
 # Testing and building up components for building the rarefaction curve below.
