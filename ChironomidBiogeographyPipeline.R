@@ -271,6 +271,7 @@ dfPrivateData$lonNum <- lonNum
 # Combining private data with dfChironomid and excluding unecessary columns for the analysis
 # and mapping
 colnames(dfPrivateData)[5] <- "subfamily_name"
+colnames(dfPrivateData)[8] <- "species_name"
 colnames(dfPrivateData)[25] <- "collectors"
 colnames(dfPrivateData)[27] <- "country"
 colnames(dfPrivateData)[28] <- "province_state"
@@ -279,10 +280,10 @@ colnames(dfPrivateData)[30] <- "sector"
 colnames(dfPrivateData)[31] <- "exactsite"
 colnames(dfPrivateData)[48] <- "bin_uri"
 
-dfPrivateData <- (dfPrivateData[,c("globalRegion","bin_uri","subfamily_name","latNum","lonNum",
+dfPrivateData <- (dfPrivateData[,c("globalRegion","bin_uri","species_name","subfamily_name","latNum","lonNum",
                                    "country","province_state","region","sector","exactsite","collectors")])
 
-dfChironomid <- (dfChironomid[,c("globalRegion","bin_uri","subfamily_name","latNum","lonNum",
+dfChironomid <- (dfChironomid[,c("globalRegion","bin_uri","species_name","subfamily_name","latNum","lonNum",
                                  "country","province_state","region","sector","exactsite","collectors")])
 
 # Combine both dataframes together
@@ -330,6 +331,9 @@ dfChironomidAll$shapeLen <- pointOverlap$Shape_Leng
 withinPoly <- grep( "[0-9]", dfChironomidAll$shapeLen)
 # Filter by subarctic zone!
 dfChironomidAll <- dfChironomidAll[withinPoly,]
+
+length(unique(dfChironomidAll$species_name))
+length(unique(dfChironomidAll$bin_uri))
 
 #############
 # Accumulation Curve Analysis
@@ -616,14 +620,14 @@ cao
 
 mapLayout <- list(
   showland = TRUE,
-  showlakes = TRUE,
-  showcountries = TRUE,
-  showocean = TRUE,
+  showlakes = FALSE,
+  showcountries = FALSE,
+  showocean = FALSE,
   countrywidth = 0.5,
   landcolor = toRGB("grey90"),
   lakecolor = toRGB("white"),
   oceancolor = toRGB("white"),
-  resolution = list(type = '50'),
+  resolution = list(type = '1000'),
   projection = list(type = 'transverse mercator'),
   lonaxis = list(
     #range = c(30, -160),
@@ -656,26 +660,61 @@ dfChironomidAll$hover <-
 # Got rid of the title since it will be included in the figure legend
 
 # This command will ensure the pairing results dataframe can be read by plotly.
-attach(dfChironomidAll)
+attach(dfChironomidMap)
 # This command will show a map organized by region (each color to a different region)
 # of all Arctic Chironomid records
-plot_ly(dfChironomidAll, lat = dfChironomidAll$latNum, lon = dfChironomidAll$lonNum, 
+plot2 <- plot_ly(dfChironomidMap, lat = dfChironomidMap$latNum, lon = dfChironomidMap$lonNum, 
         text = hover, color = globalRegion,
         mode = "markers", type = 'scattergeo') %>%
-  layout(title = paste0(mapTitle) , geo = mapLayout) %>%
+  layout(geo = mapLayout)
+  
+# Export csv's for import into plotly - this will be each region points
+dfGMap <- (dfAccGreenland[,c("globalRegion","latNum","lonNum")])
+dfNMap <- (dfAccNearctic[,c("globalRegion","latNum","lonNum")])
+dfPMap <- (dfAccPalearctic[,c("globalRegion","latNum","lonNum")])
+
+write.csv(dfGMap, file = "GMap.csv")
+write.csv(dfNMap, file = "NMap.csv")
+write.csv(dfPMap, file = "PMap.csv")
+
+# Then importing in the points for trace lines:
+# Find the mode for Greenland:
+modePoint1 <- table(dfAccGreenland$latNum)
+# 74.467,-20.567  - most number of occurences at this point - 4344 occurences - Zackenberg Research station
+
+# Taking Churchill for Nearctic - 58.7690, -94.1600
+
+modePoint2 <- table(dfAccPalearctic$latNum)
+# 78.071, 13.793 - 74 occurences - Nordenskioldland
 
 ##############
 # Venn Diagram of BINs
 
-# Counts for each circle
-A <- length(unique(dfAccGreenland$bin_uri))
-B <- length(unique(dfAccNearctic$bin_uri))
-C <- length(unique(dfAccPalearctic$bin_uri))
-
 # Counts for each overlap region
-AB <- length(intersect(dfAccGreenland$bin_uri, dfAccNearctic$bin_uri))
-AC <- length(intersect(dfAccGreenland$bin_uri, dfAccPalearctic$bin_uri))
-BC <- length(intersect(dfAccNearctic$bin_uri, dfAccPalearctic$bin_uri))
-ABC <- length(intersect(intersect(dfAccGreenland$bin_uri, dfPalearctic$bin_uri), dfNearctic$bin_uri))
+ABC <- length(intersect(intersect(dfAccGreenland$bin_uri, dfAccPalearctic$bin_uri), dfAccNearctic$bin_uri)) 
+AB <- length(intersect(dfAccGreenland$bin_uri, dfAccNearctic$bin_uri)) - ABC
+AC <- length(intersect(dfAccGreenland$bin_uri, dfAccPalearctic$bin_uri)) - ABC
+BC <- length(intersect(dfAccNearctic$bin_uri, dfAccPalearctic$bin_uri)) - ABC
 
-# Still trying to find a good package to plot this
+# Counts for each circle
+A <- length(unique(dfAccGreenland$bin_uri)) - (ABC + AB + AC)
+B <- length(unique(dfAccNearctic$bin_uri)) - (AB + BC + ABC)
+C <- length(unique(dfAccPalearctic$bin_uri)) - (AC + BC + ABC)
+
+# Should now equal 1520 unique BINs
+
+# Species
+
+# Counts for each overlap region for species
+ABC <- length(intersect(intersect(dfAccGreenland$species_name, dfPalearctic$species_name), dfNearctic$species_name))
+AB <- length(intersect(dfAccGreenland$species_name, dfAccNearctic$species_name)) - ABC
+AC <- length(intersect(dfAccGreenland$species_name, dfAccPalearctic$species_name)) - ABC
+BC <- length(intersect(dfAccNearctic$species_name, dfAccPalearctic$species_name)) - ABC
+
+# Counts for each circle for species
+A <- length(unique(dfAccGreenland$species_name)) - (ABC + AB + AC)
+B <- length(unique(dfAccNearctic$species_name)) - (AB + BC + ABC)
+C <- length(unique(dfAccPalearctic$species_name)) - (AC + BC + ABC)
+
+# Using these counts in this shiny app that makes Venn diagrams:
+# http://jolars.co/eulerr/
