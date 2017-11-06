@@ -706,7 +706,7 @@ C <- length(unique(dfAccPalearctic$bin_uri)) - (AC + BC + ABC)
 # Species
 
 # Counts for each overlap region for species
-ABC <- length(intersect(intersect(dfAccGreenland$species_name, dfPalearctic$species_name), dfNearctic$species_name))
+ABC <- length(intersect(intersect(dfAccGreenland$species_name, dfAccPalearctic$species_name), dfAccNearctic$species_name))
 AB <- length(intersect(dfAccGreenland$species_name, dfAccNearctic$species_name)) - ABC
 AC <- length(intersect(dfAccGreenland$species_name, dfAccPalearctic$species_name)) - ABC
 BC <- length(intersect(dfAccNearctic$species_name, dfAccPalearctic$species_name)) - ABC
