@@ -381,7 +381,7 @@ greenlandBIN
 # 1,000. For Greenland, I ran 100 replicates in a couple of minutes on my laptop. ***Update, setting to 10 
 # for testing****
 for (i in 1:(nGreen-1))
-{greenlandBIN <- replicate(5, {
+{greenlandBIN <- replicate(100, {
   length(unique(sample(dfAccGreenland1, size=i)))
 })
 {meanBINGreenland[i] <- mean(greenlandBIN, na.rm=TRUE)
@@ -415,7 +415,7 @@ unique(sample(dfAccNearctic1, size=10))
 length(unique(sample(dfAccNearctic1, size=10)))
 
 # Testing that this bit is doing what we want:
-nearcticBIN <- replicate(10, {
+nearcticBIN <- replicate(100, {
   length(unique(sample(dfAccNearctic1, size=10)))
 })
 nearcticBIN
@@ -423,7 +423,7 @@ nearcticBIN
 # Testing replicates for Nearctic, ***Update, setting to 5 for now
 # for testing because Nearctic is so large****
 for (i in 1:(nNearctic-1))
-{nearcticBIN <- replicate(5, {
+{nearcticBIN <- replicate(100, {
   length(unique(sample(dfAccNearctic1, size=i)))
 })
 {meanBINNearctic[i] <- mean(nearcticBIN, na.rm=TRUE)
@@ -465,7 +465,7 @@ palearcticBIN
 # Testing replicates for Nearctic, ***Update, setting to 10 
 # for testing****
 for (i in 1:(nPalearctic-1))
-{palearcticBIN <- replicate(5, {
+{palearcticBIN <- replicate(100, {
   length(unique(sample(dfAccPalearctic1, size=i)))
 })
 {meanBINPalearctic[i] <- mean(palearcticBIN, na.rm=TRUE)
@@ -504,13 +504,13 @@ dfRegion$region <- names(combinedRegions)
 
 # X and Y axis 
 f <- list(
-  family = "sans-serif",
+  family = "open-sans",
   size = 18,
   color = "#7f7f7f"
 )
 
 f2 <- list(
-  family = "sans-serif",
+  family = "open-sans",
   size = 13,
   color = "#7f7f7f"
 )
@@ -530,7 +530,7 @@ y <- list(
 # Legend
 l <- list(
   font = list(
-    family = "sans-serif",
+    family = "open-sans",
     size = 16,
     color = "#000"),
   bgcolor = "#E2E2E2",
@@ -542,6 +542,11 @@ pRegion <- plot_ly(data = dfRegion, y = dfRegion$combinedRegions, color = dfRegi
   layout(xaxis = x, yaxis = y, legend = l)
   
 pRegion
+
+api_create(pRegion, filename = "AccCurve100Rep")
+Sys.setenv("plotly_username"="Matt14") 
+Sys.setenv("plotly_api_key"="W0jEdwXDUtAAVsmY9nRJ")
+
 
 # Truncated Plot of Accumulation according to region, truncated by smallest region Palearctic
 x2 <- list(
@@ -564,15 +569,27 @@ dfNSubset <- (dfAccNearctic[,c("globalRegion","bin_uri")])
 dfPSubset <- (dfAccPalearctic[,c("globalRegion","bin_uri")])
 dfGSubset <- (dfAccGreenland[,c("globalRegion","bin_uri")])
 
+# Dividing Greenland into 2 regions for one set of dissimilarity measures - East and West - Dividing by -30 lon
+# This will divide between Zackenberg Research Station on the east and all points on west
+greenlandEast <- which(dfAccGreenland$lonNum>-30)
+dfGreenlandEast  <- dfAccGreenland[greenlandEast,]
+dfGEastSubset <- (dfGreenlandEast[,c("globalRegion","bin_uri")])
+dfGreenlandWest <- dfAccGreenland[-greenlandEast,]
+dfGWestSubset <- (dfGreenlandWest[,c("globalRegion","bin_uri")])
+
 # Group by BIN
 nearcticGroup <- group_by(dfNSubset, bin_uri)
 palearcticGroup <- group_by(dfPSubset, bin_uri)
 greenlandGroup <- group_by(dfGSubset, bin_uri)
+greenEast <- group_by(dfGEastSubset, bin_uri)
+greenWest <- group_by(dfGWestSubset, bin_uri)
 
 # BIN counts per region
 countsN <- summarize(nearcticGroup, count = n())
 countsP <- summarize(palearcticGroup, count = n())
 countsG <- summarize(greenlandGroup, count = n())
+countsGE <- summarize(greenEast, count = n())
+countsGW <- summarize(greenWest, count = n())
 
 # Assign regions again - ***gives a warning but does work***
 for (i in 1:nrow(countsN)){
@@ -584,19 +601,32 @@ for (i in 1:nrow(countsP)){
 for (i in 1:nrow(countsG)){
   countsG$region[i] <- "Greenland"
 }
+for (i in 1:nrow(countsGE)){
+  countsGE$region[i] <- "GreenlandEast"
+}
+for (i in 1:nrow(countsGW)){
+  countsGW$region[i] <- "GreenlandWest"
+}
 
 # Combine together again - now its in the right format for spread function
 countsAll <- rbind(countsN, countsP, countsG)
+countsAllGDivide <- rbind(countsN, countsP, countsGE, countsGW)
 
 # First converting to the right format using tidyr
 counts_spread <- spread(countsAll, key = bin_uri, value = count)
+countsAllGDivide_spread <- spread(countsAllGDivide, key = bin_uri, value = count)
 
 # If NA in a cell - assign a 0
 counts_spread[is.na(counts_spread)] <- 0
+countsAllGDivide_spread[is.na(countsAllGDivide_spread)] <- 0
 
 # Make the region column the rowname
 counts_spread1 <- counts_spread[,-1]
 row.names(counts_spread1) <- counts_spread$region
+
+countsGDivide_spread1 <- countsAllGDivide_spread[,-1]
+row.names(countsGDivide_spread1) <- countsAllGDivide_spread$region
+
 
 # Dissimilarity measure using chao
 chao <- vegdist(counts_spread1, method="chao")
@@ -605,6 +635,15 @@ chao
 # Dissimilarity measure using cao
 cao <- vegdist(counts_spread1, method="cao")
 cao
+
+# Dissimilarity measure using chao when dividing Greenland
+chao <- vegdist(countsGDivide_spread1, method="chao")
+chao
+
+# Dissimilarity measure using cao when dividing Greenland
+cao <- vegdist(countsGDivide_spread1, method="cao")
+cao
+
 
 ###############
 # Plot on plotly after Vegan analysis 
@@ -715,6 +754,8 @@ BC <- length(intersect(dfAccNearctic$species_name, dfAccPalearctic$species_name)
 A <- length(unique(dfAccGreenland$species_name)) - (ABC + AB + AC)
 B <- length(unique(dfAccNearctic$species_name)) - (AB + BC + ABC)
 C <- length(unique(dfAccPalearctic$species_name)) - (AC + BC + ABC)
+
+# Should now equal 572 unique species
 
 # Using these counts in this shiny app that makes Venn diagrams:
 # http://jolars.co/eulerr/
