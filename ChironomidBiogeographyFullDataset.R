@@ -224,8 +224,8 @@ binSelect <- as.character(binSelect)
 # Subset dfChironomidFilter by processids selected as representatives
 dfSingleSeq <- subset(dfChironomidFilter, processid %in% binSelect)
 dfSingleSeq$seqLength <- nchar(dfSingleSeq$nucleotides)
-dfSingleSeq = dfSingleSeq[order(dfSingleSeq[,'processid'],-dfSingleSeq[,'seqLength']),]
-dfSingleSeq = dfSingleSeq[!duplicated(dfSingleSeq$processid),]
+dfSingleSeq <- dfSingleSeq[order(dfSingleSeq[,'processid'],-dfSingleSeq[,'seqLength']),]
+dfSingleSeq <- dfSingleSeq[!duplicated(dfSingleSeq$processid),]
 
 ##############
 # Single-linkage Clustering using the Decipher Package
