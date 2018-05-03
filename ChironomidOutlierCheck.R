@@ -5,6 +5,24 @@
 
 # Authored by Matthew G. Orton
 
+# Packages used
+# install.packages("foreach")
+library(foreach)
+# install.packages("ape")
+library(ape)
+# read_tsv function.
+# install.packages("readr")
+library(readr)
+# source("https://bioconductor.org/biocLite.R")
+# biocLite("Biostrings")
+# biocLite("muscle")
+# biocLite("DECIPHER")
+library(DECIPHER)
+library(Biostrings) 
+library(muscle)
+# install.packages("plotly")
+library(plotly)
+
 # After selection of sequence representatives per BIN
 
 dnaStringSet <- DNAStringSet(dfSingleSeq$nucleotides)
