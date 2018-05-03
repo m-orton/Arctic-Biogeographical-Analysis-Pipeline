@@ -1,2 +1,1 @@
-# ChironomidProject
-Chironomidae Biogeography Project
+# Chironomidae Biogeography Project
