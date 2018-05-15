@@ -254,7 +254,7 @@ clustSingle4 <- IdClusters(distanceMatrix,
                            method = "single",
                            cutoff= 0.04,
                            showPlot = TRUE,
-                           type = "clusters",
+                           type = "both",
                            processors = 2,
                            verbose = TRUE)
 
@@ -266,7 +266,7 @@ clustSingle45 <- IdClusters(distanceMatrix,
                             method = "single",
                             cutoff= 0.045,
                             showPlot = TRUE,
-                            type = "clusters",
+                            type = "both",
                             processors = 2,
                             verbose = TRUE)
 
@@ -278,20 +278,20 @@ clustSingle5 <- IdClusters(distanceMatrix,
                            method = "single",
                            cutoff= 0.05,
                            showPlot = TRUE,
-                           type = "clusters",
+                           type = "both",
                            processors = 2,
                            verbose = TRUE)
 
 # Number of unique clusters for 5%
 length(unique(clustSingle5$cluster))
 
-# Renaming column for 4% cluster
-clustSingle4 <- setDT(clustSingle4, keep.rownames = TRUE)[]
-colnames(clustSingle4)[2] <- "cluster_4"
+# Renaming column for 4.5% cluster
+clustSingle45 <- setDT(clustSingle45, keep.rownames = TRUE)[]
+colnames(clustSingle45)[2] <- "cluster_45"
 
 # Merge clusters to original Chironomid dataset (pre-alignment filter)
 # Every record of every BIN will now have a defined "superBIN"!
-dfChironomidSBIN <- merge(dfChironomidAll, clustSingle4, by.x ="bin_uri", by.y ="rn")
+dfChironomidSBIN <- merge(dfChironomidAll, clustSingle45, by.x ="bin_uri", by.y ="rn")
 
 ############
 # Taxonomy Curation of Greenland (Elisabeth's revisions to Greenland species)
@@ -345,10 +345,10 @@ dfNSubset_BIN <- (dfNearcticBIN[,c("globalRegion","bin_uri")])
 dfPSubset_BIN <- (dfPalearcticBIN[,c("globalRegion","bin_uri")])
 dfGSubset_BIN <- (dfGreenlandBIN[,c("globalRegion","bin_uri")])
 
-# Or separate by SBIN - 4%
-dfNSubset_SBIN <- (dfNearcticSBIN[,c("globalRegion","cluster_4")])
-dfPSubset_SBIN <- (dfPalearcticSBIN[,c("globalRegion","cluster_4")])
-dfGSubset_SBIN <- (dfGreenlandSBIN[,c("globalRegion","cluster_4")])
+# Or separate by SBIN - 4.5%
+dfNSubset_SBIN <- (dfNearcticSBIN[,c("globalRegion","cluster_45")])
+dfPSubset_SBIN <- (dfPalearcticSBIN[,c("globalRegion","cluster_45")])
+dfGSubset_SBIN <- (dfGreenlandSBIN[,c("globalRegion","cluster_45")])
 
 # Separate by species 
 dfNSubset_Sp <- (dfNearcticSBIN[,c("globalRegion","species_name")])
@@ -361,9 +361,9 @@ palearcticGroup_BIN <- group_by(dfPSubset_BIN, bin_uri)
 greenlandGroup_BIN <- group_by(dfGSubset_BIN, bin_uri)
 
 # Group by SBIN
-nearcticGroup_SBIN <- group_by(dfNSubset_SBIN, cluster_4)
-palearcticGroup_SBIN <- group_by(dfPSubset_SBIN, cluster_4)
-greenlandGroup_SBIN <- group_by(dfGSubset_SBIN, cluster_4)
+nearcticGroup_SBIN <- group_by(dfNSubset_SBIN, cluster_45)
+palearcticGroup_SBIN <- group_by(dfPSubset_SBIN, cluster_45)
+greenlandGroup_SBIN <- group_by(dfGSubset_SBIN, cluster_45)
 
 # Group by species
 nearcticGroup_Sp <- group_by(dfNSubset_Sp, species_name)
@@ -424,7 +424,7 @@ countsAll_Sp <- rbind(countsN_Sp, countsP_Sp, countsG_Sp)
 
 # First converting to the right format using tidyr
 counts_spread_BIN <- spread(countsAll_BIN, key = bin_uri, value = count)
-counts_spread_SBIN <- spread(countsAll_SBIN, key = cluster_4, value = count)
+counts_spread_SBIN <- spread(countsAll_SBIN, key = cluster_45, value = count)
 counts_spread_Sp <- spread(countsAll_Sp, key = species_name, value = count)
 
 # If NA in a cell - assign a 0
@@ -720,18 +720,18 @@ G_Sp <- length((unique(dfGreenlandBIN$species_name))) - (GN_Sp + GP_Sp + GPN_Sp)
 N_Sp <- length(unique(dfNearcticBIN$species_name)) - (GN_Sp + NP_Sp + GPN_Sp)
 P_Sp <- length(unique(dfPalearcticBIN$species_name)) - (GP_Sp + NP_Sp + GPN_Sp)
 
-# Venn Diagram of SBINs at 4%
+# Venn Diagram of SBINs at 4.5%
 
 # Counts for each overlap region
-GPN_SBIN <- length(intersect(intersect(dfGreenlandSBIN$cluster_4, dfPalearcticSBIN$cluster_4), dfNearcticSBIN$cluster_4))
-GN_SBIN <- length(intersect(dfGreenlandSBIN$cluster_4, dfNearcticSBIN$cluster_4)) - GPN_SBIN
-GP_SBIN <- length(intersect(dfGreenlandSBIN$cluster_4, dfPalearcticSBIN$cluster_4)) - GPN_SBIN
-NP_SBIN <- length(intersect(dfNearcticSBIN$cluster_4, dfPalearcticSBIN$cluster_4)) - GPN_SBIN
+GPN_SBIN <- length(intersect(intersect(dfGreenlandSBIN$cluster_45, dfPalearcticSBIN$cluster_45), dfNearcticSBIN$cluster_45))
+GN_SBIN <- length(intersect(dfGreenlandSBIN$cluster_45, dfNearcticSBIN$cluster_45)) - GPN_SBIN
+GP_SBIN <- length(intersect(dfGreenlandSBIN$cluster_45, dfPalearcticSBIN$cluster_45)) - GPN_SBIN
+NP_SBIN <- length(intersect(dfNearcticSBIN$cluster_45, dfPalearcticSBIN$cluster_45)) - GPN_SBIN
 
 # Counts for each circle
-G_SBIN <- length((unique(dfGreenlandSBIN$cluster_4))) - (GN_SBIN + GP_SBIN + GPN_SBIN)
-N_SBIN <- length(unique(dfNearcticSBIN$cluster_4)) - (GN_SBIN + NP_SBIN + GPN_SBIN)
-P_SBIN <- length(unique(dfPalearcticSBIN$cluster_4)) - (GP_SBIN + NP_SBIN + GPN_SBIN)
+G_SBIN <- length((unique(dfGreenlandSBIN$cluster_45))) - (GN_SBIN + GP_SBIN + GPN_SBIN)
+N_SBIN <- length(unique(dfNearcticSBIN$cluster_45)) - (GN_SBIN + NP_SBIN + GPN_SBIN)
+P_SBIN <- length(unique(dfPalearcticSBIN$cluster_45)) - (GP_SBIN + NP_SBIN + GPN_SBIN)
 
 # Using these counts in this shiny app that makes Venn diagrams:
 # http://jolars.co/eulerr/
