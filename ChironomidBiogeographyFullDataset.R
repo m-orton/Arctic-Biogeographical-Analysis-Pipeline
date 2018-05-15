@@ -240,17 +240,20 @@ dfSingleSeq <- dfSingleSeq[!duplicated(dfSingleSeq$processid),]
 # Single-linkage Clustering using the Decipher Package
 
 # Alignment step
-dnaStringSet <- DNAStringSet(dfSingleSeq$nucleotides)
-alignment <- muscle(dnaStringSet, maxiters = 2, diags = TRUE, gapopen = -3000)
-dnaStringSet2 <- DNAStringSet(alignment)
+# dnaStringSet <- DNAStringSet(dfSingleSeq$nucleotides)
+# alignment <- muscle(dnaStringSet, maxiters = 2, diags = TRUE, gapopen = -3000)
+# dnaStringSet2 <- DNAStringSet(alignment)
 
 # Name the stringset with record ids
-bin_uri <- dfSingleSeq$bin_uri
-names(dnaStringSet2) <- bin_uri
+# bin_uri <- dfSingleSeq$bin_uri
+# names(dnaStringSet2) <- bin_uri
 
 # Write out to fasta
-fileName <- paste("ChironomidAlignment_AllCanNor.fas")
-writeXStringSet(dnaStringSet2, file=fileName, format = "fasta", width = 658)
+# fileName <- paste("ChironomidAlignment_AllCanNor.fas")
+# writeXStringSet(dnaStringSet2, file=fileName, format = "fasta", width = 658)
+                  
+# Read in generated alignment for FULL dataset (AllCanNor):
+dnaStringSet2 <- readDNAStringSet("ChironomidAlignmentMay1_AllCanNor_2nd.fas")
 
 # DNAbin format
 dnaBin <- as.DNAbin(dnaStringSet2)
