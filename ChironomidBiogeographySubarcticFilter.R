@@ -50,12 +50,19 @@ library(stringr)
 ##############
 # Parsing from BOLD
 
-# Oct 20/2017 - Following commands run:
-
-# Public records for each of the three regions
+# Public records for each of the three regions - for most recent data from BOLD:
 # dfNearctic <- read_tsv("http://www.boldsystems.org/index.php/API_Public/combined?taxon=Chironomidae&geo=Alaska|Canada&format=tsv")
 # dfGreenland <- read_tsv("http://www.boldsystems.org/index.php/API_Public/combined?taxon=Chironomidae&geo=Greenland&format=tsv")
 # dfPalearctic <- read_tsv("http://www.boldsystems.org/index.php/API_Public/combined?taxon=Chironomidae&geo=Norway|Denmark|Iceland|Sweden|Finland&format=tsv")
+
+# To read in datasets from initial download on Oct 2017:
+dfGreenland <- read.csv("dfGreenland_Oct17.csv")
+dfGreenland <- dfGreenland[,2:81]
+# Must unzip Nearctic csv file first
+dfNearctic <- read.csv("dfNearctic_Oct17.csv")
+dfNearctic <- dfNearctic[,2:81]
+dfPalearctic <- read.csv("dfPalearctic_Oct17.csv")
+dfPalearctic <- dfPalearctic[,2:81]
 
 # Note that BOLD makes the distinction between Greenland and Denmark and distinguishes them as separate countries
 # (even though they are not) so the datasets between Denmark and Greenland are nonoverlapping
