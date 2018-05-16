@@ -81,7 +81,11 @@ install.packages("data.table")
 install.packages("vegan")
 ```
 
+## Authors
+Matthew Orton
+Dr. Sally Adamowicz
+
 ## Acknowledgments
 Dr. Torbjørn Ekrem and Dr. Elisabeth Stur for kindly providing their Chironomid datasets.
-Dr. Sally Adamowicz for her work on the analysis pipelines.
+
 
