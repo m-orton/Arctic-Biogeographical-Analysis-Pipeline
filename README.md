@@ -81,8 +81,10 @@ install.packages("data.table")
 install.packages("vegan")
 ```
 
-## Authors
+## Authors of Pipeline
+
 Matthew Orton
+
 Dr. Sally Adamowicz
 
 ## Acknowledgments
