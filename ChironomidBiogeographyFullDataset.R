@@ -311,7 +311,7 @@ dfChironomidSBIN <- merge(dfChironomidAll, clustSingle45, by.x ="bin_uri", by.y 
 
 # Read in Elizabeths csv file for Greenland (modified to incorporate her revisions) -
 # Certain species removed that were misclassified
-dfSpeciesEdit <- read_csv("Greenland records chironomid (1).csv")
+dfSpeciesEdit <- read_csv("Greenland_records_chironomid.csv")
 colnames(dfSpeciesEdit)[1] <- "col_1"
 splitSpecies <- foreach(i=1:nrow(dfSpeciesEdit)) %do% strsplit(dfSpeciesEdit$col_1[i], ",")
 # Convert to dataframe format
