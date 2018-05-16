@@ -19,12 +19,12 @@ dfNearctic_Oct17.csv ([Nearctic](ChironomidDatasets/dfNearctic_Oct17.7z) must be
 
 ### Alternatively current BOLD data can be used via a direct download from BOLD by running the below commands:
 
-'''
+```
 dfNearctic <- read_tsv("http://www.boldsystems.org/index.php/API_Public/combined?taxon=Chironomidae&geo=Alaska|Canada&format=tsv")
 dfGreenland <- read_tsv("http://www.boldsystems.org/index.php/API_Public/combined?taxon=Chironomidae&geo=Greenland&format=tsv")
 dfPalearctic <- read_tsv("http://www.boldsystems.org/index.php/API_Public/combinedtaxon=Chironomidae&geo=Norway|
                           Denmark|Iceland|Sweden|Finland&format=tsv")
-'''
+```
 
 ### For using the datasets provided by Torbjørn Ekrem and Elisabeth Stur (datasets are now publicly available on BOLD):
 
