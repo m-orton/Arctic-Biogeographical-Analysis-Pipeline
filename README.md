@@ -38,7 +38,7 @@ dfPalearctic <- read_tsv("http://www.boldsystems.org/index.php/API_Public/combin
 
 [Full Dataset Alignment](ChironomidDatasets/ChironomidAlignmentMay1_AllCanNor_2nd.fas)
 
-[Subacrctic Filtered Alignment](ChironomidDatasets/ChironomidAlignmentApril24_Subarctic.fas)
+[Subarctic Filtered Alignment](ChironomidDatasets/ChironomidAlignmentApril24_Subarctic.fas)
 
 
 ### To run the [Subarctic Shapefile Filtered Pipeline](ChironomidBiogeographySubarcticFilter.R) please ensure the following shapefiles are also included in the current working R directory:
