@@ -28,7 +28,7 @@ dfNearctic_Oct17.csv ([Nearctic](ChironomidDatasets/dfNearctic_Oct17.7z) must be
 
 ### Multiple sequence alignments for single-linkage clustering with a 4, 4.5 or 5% cutoff threshold:
 
-[Full Datasets Alignment](ChironomidDatasets/ChironomidAlignmentMay1_AllCanNor_2nd.fas)
+[Full Dataset Alignment](ChironomidDatasets/ChironomidAlignmentMay1_AllCanNor_2nd.fas)
 
 [Subacrctic Filtered Alignment](ChironomidDatasets/ChironomidAlignmentApril24_Subarctic.fas)
 
