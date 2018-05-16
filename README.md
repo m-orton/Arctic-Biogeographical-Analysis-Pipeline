@@ -23,7 +23,7 @@ For using the datasets provided by Torbjørn Ekrem and Elisabeth Stur (datasets 
 
 [Sequence_Data](ChironomidDatasets/PrivateSequenceData.fas)
 
-[Curated Greenland Species Data](ChironomidDatasets/Greenland records chironomid (1).csv)
+[Curated Greenland Species Data](ChironomidDatasets/Greenland records chironomid (1).csv) 
 
 Multiple sequence alignments for single-linkage clustering with a 4, 4.5 or 5% cutoff threshold:
 
