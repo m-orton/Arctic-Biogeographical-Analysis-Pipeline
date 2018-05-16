@@ -35,19 +35,19 @@ dfNearctic_Oct17.csv ([Nearctic](ChironomidDatasets/dfNearctic_Oct17.7z) must be
 
 ### To run the second pipeline: [Subarctic Pipeline](ChironomidBiogeographySubarcticFilter.R) please ensure the following shapefiles are also included in the current working R directory:
 
-[.dbf file](ArcticShapefiles/Arctic_Zones.dbf)
+[.dbf](ArcticShapefiles/Arctic_Zones.dbf)
 
-[.prj file](ArcticShapefiles/Arctic_Zones.prj)
+[.prj](ArcticShapefiles/Arctic_Zones.prj)
 
-[.sbn file](ArcticShapefiles/Arctic_Zones.sbn)
+[.sbn](ArcticShapefiles/Arctic_Zones.sbn)
 
-[.sbx file](ArcticShapefiles/Arctic_Zones.sbx)
+[.sbx](ArcticShapefiles/Arctic_Zones.sbx)
 
-[.shp file](ArcticShapefiles/Arctic_Zones.shp)
+[.shp](ArcticShapefiles/Arctic_Zones.shp)
 
-[.shp.xml file](ArcticShapefiles/Arctic_Zones.shp.xml)
+[.shp.xml](ArcticShapefiles/Arctic_Zones.shp.xml)
 
-[.shx file](ArcticShapefiles/Arctic_Zones.shx)
+[.shx](ArcticShapefiles/Arctic_Zones.shx)
 
 ## Installation
 
