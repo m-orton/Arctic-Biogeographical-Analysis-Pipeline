@@ -30,7 +30,7 @@ dfPalearctic <- read_tsv("http://www.boldsystems.org/index.php/API_Public/combin
 
 [Taxonomic Data](ChironomidDatasets/Private_Chironomid_Data_ModifiedSingleSheet.csv)
 
-[Sequence_Data](ChironomidDatasets/PrivateSequenceData.fas)
+[Sequence Data](ChironomidDatasets/PrivateSequenceData.fas)
 
 [Curated Greenland Species Data](ChironomidDatasets/Greenland_records_chironomid.csv) 
 
