@@ -33,7 +33,7 @@ dfNearctic_Oct17.csv ([Nearctic](ChironomidDatasets/dfNearctic_Oct17.7z) must be
 [Subacrctic Filtered Alignment](ChironomidDatasets/ChironomidAlignmentApril24_Subarctic.fas)
 
 
-### To run the second pipeline: [Subarctic Pipeline](ChironomidBiogeographySubarcticFilter.R) please ensure the following shapefiles are also included in the current working R directory:
+### To run the [Subarctic Shapefile Filtered Pipeline](ChironomidBiogeographySubarcticFilter.R) please ensure the following shapefiles are also included in the current working R directory:
 
 [.dbf](ArcticShapefiles/Arctic_Zones.dbf)
 
