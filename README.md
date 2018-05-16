@@ -12,28 +12,39 @@ current working R directory:
 Public BOLD data from October/2017 download:
 
 [Greenland](ChironomidDatasets/dfGreenland_Oct17.csv)
+
 dfNearctic_Oct17.csv ([Nearctic](ChironomidDatasets/dfNearctic_Oct17.7z) must be unzipped first with 7zip software)
+
 [Palearctic](ChironomidDatasets/dfPalearctic_Oct17.csv)
 
 For using the datasets provided by Torbjørn Ekrem and Elisabeth Stur (datasets are now publicly available on BOLD):
 
 [Taxonomic Data](ChironomidDatasets/Private_Chironomid_Data_ModifiedSingleSheet.csv)
+
 [Sequence_Data](ChironomidDatasets/PrivateSequenceData.fas)
+
 [Curated Greenland Species Data](ChironomidDatasets/Greenland records chironomid (1).csv)
 
 Multiple sequence alignments for single-linkage clustering with a 4, 4.5 or 5% cutoff threshold:
 
 [Full Datasets Alignment](ChironomidDatasets/ChironomidAlignmentMay1_AllCanNor_2nd.fas)
+
 [Subacrctic Filtered Alignment](ChironomidDatasets/ChironomidAlignmentApril24_Subarctic.fas)
 
 To run the second pipeline: [Subarctic Pipeline](ChironomidBiogeographySubarcticFilter.R) please ensure the following shapefiles are also included in the current working R directory:
 
 [.dbf file](ArcticShapefiles/Arctic_Zones.dbf)
+
 [.prj file](ArcticShapefiles/Arctic_Zones.prj)
+
 [.sbn file](ArcticShapefiles/Arctic_Zones.sbn)
+
 [.sbx file](ArcticShapefiles/Arctic_Zones.sbx)
+
 [.shp file](ArcticShapefiles/Arctic_Zones.shp)
+
 [.shp.xml file](ArcticShapefiles/Arctic_Zones.shp.xml)
+
 [.shx file](ArcticShapefiles/Arctic_Zones.shx)
 
 ### Installation
