@@ -760,6 +760,75 @@ row.names(countsGDivide_spread1) <- countsAllGDivide_spread$region
 # Dissimilarity measure using chao when dividing Greenland
 chao_GDivide <- vegdist(countsGDivide_spread1, method="chao")
 chao_GDivide
+                  
+################
+# Mapping by site with Plotly
+
+# round to 1 decimal for lat/lon
+dfNonArctic <- dfChironomidAll[-withinPoly,]
+dfSubArctic <- dfChironomidFilter
+
+dfNonArctic$site <- paste0(round(dfNonArctic$latNum, 1), "_", round(dfNonArctic$lonNum, 1), sep=" ")  
+dfSubArctic$site <- paste0(round(dfSubArctic$latNum, 1), "_", round(dfSubArctic$lonNum, 1), sep=" ")  
+  
+# Break down by site (list per site)
+siteListS <- lapply(unique(dfSubArctic$site), function(x) 
+  dfSubArctic[dfSubArctic$site == x,])  
+  
+siteListN <- lapply(unique(dfNonArctic$site), function(x) 
+  dfNonArctic[dfNonArctic$site == x,])
+
+# Extract useful elements from the list
+siteSizeS <- sapply( siteListS , function (x) length( x$bin_uri ) )
+siteCoordS <- sapply( siteListS , function (x) unique( x$site ) )
+siteSplitS <- strsplit(siteCoordS, '_')
+siteLatS <- sapply(siteSplitS, function(x) x[1])
+siteLonS <- sapply(siteSplitS, function(x) x[2])
+siteRegionS <- sapply( siteListS , function (x) unique( x$globalRegion ) )
+
+siteSizeN <- sapply( siteListN , function (x) length( x$bin_uri ) )
+siteCoordN <- sapply( siteListN , function (x) unique( x$site ) )
+siteSplitN <- strsplit(siteCoordN, '_')
+siteLatN <- sapply(siteSplitN, function(x) x[1])
+siteLonN <- sapply(siteSplitN, function(x) x[2])
+siteRegionN <- sapply( siteListN , function (x) unique( x$globalRegion ) )
+
+dfSiteS <- data.frame(siteSizeS)
+dfSiteS$CoordS <- as.character(siteCoordS)
+dfSiteS$lat <- as.numeric(siteLatS)
+dfSiteS$lon <- as.numeric(siteLonS)
+dfSiteS$region <- as.character(siteRegionS)
+dfSiteS$log_transform <- round(log(dfSiteS$siteSizeS) + 1, 1)
+
+dfSiteN <- data.frame(siteSizeN)
+dfSiteN$CoordN <- as.character(siteCoordN)
+dfSiteN$lat <- as.numeric(siteLatN)
+dfSiteN$lon <- as.numeric(siteLonN)
+dfSiteN$region <- as.character(siteRegionN)
+dfSiteN$log_transform <- round(log(dfSiteN$siteSizeN) + 1, 1)
+
+containGreenland <- which(dfSiteS$region=="Greenland")
+dfGreenlandBIN <- dfSiteS[containGreenland,]
+
+containNearctic1 <- which(dfSiteS$region=="Nearctic")
+dfNearcticBIN1 <- dfSiteS[containNearctic1,]
+
+containPalearctic1 <-  which(dfSiteS$region=="Palearctic")
+dfPalearcticBIN1 <- dfSiteS[containPalearctic1,]
+
+containNearctic2 <- which(dfSiteN$region=="Nearctic")
+dfNearcticBIN2 <- dfSiteN[containNearctic2,]
+
+containPalearctic2 <-  which(dfSiteN$region=="Palearctic")
+dfPalearcticBIN2 <- dfSiteN[containPalearctic2,]
+
+# Export csv's for import into plotly for further formatting of the map
+# on the plotly server:
+write.csv(dfGreenlandBIN, file = "GMap.csv")
+write.csv(dfPalearcticBIN1, file = "PMap1.csv")
+write.csv(dfPalearcticBIN2, file = "PMap2.csv")
+write.csv(dfNearcticBIN1, file = "NMap1.csv")
+write.csv(dfNearcticBIN2, file = "NMap2.csv")
 
 ##############
 # Venn Diagram Calculation
