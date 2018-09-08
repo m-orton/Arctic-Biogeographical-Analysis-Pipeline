@@ -42,27 +42,16 @@ library(tidyr)
 library(dplyr)
 # install.packages("data.table")
 library(data.table)
-# install.packages("vegan")
-library(vegan)
-# install.packages("stringr")
-library(stringr)
 
 ##############
 # Parsing from BOLD
 
-# Public records for each of the three regions - for most recent data from BOLD:
+# Oct 20/2017 - Following commands run:
+
+# Public records for each of the three regions
 # dfNearctic <- read_tsv("http://www.boldsystems.org/index.php/API_Public/combined?taxon=Chironomidae&geo=Alaska|Canada&format=tsv")
 # dfGreenland <- read_tsv("http://www.boldsystems.org/index.php/API_Public/combined?taxon=Chironomidae&geo=Greenland&format=tsv")
 # dfPalearctic <- read_tsv("http://www.boldsystems.org/index.php/API_Public/combined?taxon=Chironomidae&geo=Norway|Denmark|Iceland|Sweden|Finland&format=tsv")
-
-# To read in datasets from initial download on Oct 2017:
-dfGreenland <- read.csv("dfGreenland_Oct17.csv")
-dfGreenland <- dfGreenland[,2:81]
-# Must unzip Nearctic csv file first
-dfNearctic <- read.csv("dfNearctic_Oct17.csv")
-dfNearctic <- dfNearctic[,2:81]
-dfPalearctic <- read.csv("dfPalearctic_Oct17.csv")
-dfPalearctic <- dfPalearctic[,2:81]
 
 # Note that BOLD makes the distinction between Greenland and Denmark and distinguishes them as separate countries
 # (even though they are not) so the datasets between Denmark and Greenland are nonoverlapping
@@ -213,18 +202,18 @@ proj4string(xy) <- CRS("+proj=longlat +datum=WGS84")
 convertUTM <- spTransform(xy, CRS("+init=epsg:3408"))
 
 # Transform our shapefile
-subarcticZone <- spTransform(subarcticZone, CRSobj = "+init=epsg:3408")
+subarcticZone2 <- spTransform(subarcticZone, CRSobj = "+init=epsg:3408")
 
 # Projection of each spatial dataframe
 projection(convertUTM) 
-projection(subarcticZone) 
+projection(subarcticZone2) 
 
 # Find which points overlap, commands may take a while:
-pointOverlap <- sp::over(convertUTM, subarcticZone, fn = NULL)
-pointOverlaprgeos <- rgeos::gIntersection(convertUTM, subarcticZone)
+pointOverlap <- sp::over(convertUTM, subarcticZone2, fn = NULL)
+pointOverlaprgeos <- rgeos::gIntersection(convertUTM, subarcticZone2)
 
 # Plot points in polygon, points within the polygon plot green
-plot(subarcticZone)
+plot(subarcticZone2)
 plot(convertUTM, pch = 19, cex = 1, add = TRUE)
 plot(pointOverlaprgeos, pch = 19, cex = 0.5, col = 'green', add = TRUE)
 box()
@@ -233,7 +222,7 @@ box()
 dfChironomidAll$shapeLen <- pointOverlap$Shape_Leng
 withinPoly <- grep( "[0-9]", dfChironomidAll$shapeLen)
 # Filter by subarctic zone!
-dfChironomidAll <- dfChironomidAll[withinPoly,]
+dfChironomidFilter <- dfChironomidAll[withinPoly,]
 
 ##############
 # Selecting One Sequence per BIN 
@@ -307,7 +296,7 @@ clustSingle4 <- IdClusters(distanceMatrix,
                           method = "single",
                           cutoff= 0.04,
                           showPlot = TRUE,
-                          type = "both",
+                          type = "clusters",
                           processors = 2,
                           verbose = TRUE)
 
@@ -319,7 +308,7 @@ clustSingle45 <- IdClusters(distanceMatrix,
                            method = "single",
                            cutoff= 0.045,
                            showPlot = TRUE,
-                           type = "both",
+                           type = "clusters",
                            processors = 2,
                            verbose = TRUE)
 
@@ -331,20 +320,20 @@ clustSingle5 <- IdClusters(distanceMatrix,
                             method = "single",
                             cutoff= 0.05,
                             showPlot = TRUE,
-                            type = "both",
+                            type = "clusters",
                             processors = 2,
                             verbose = TRUE)
 
 # Number of unique clusters for 5%
 length(unique(clustSingle5$cluster))
 
-# Renaming column for 4.5% cluster
-clustSingle45 <- setDT(clustSingle45, keep.rownames = TRUE)[]
-colnames(clustSingle45)[2] <- "cluster_45"
+# Renaming column for 4% cluster
+clustSingle4 <- setDT(clustSingle4, keep.rownames = TRUE)[]
+colnames(clustSingle4)[2] <- "cluster_4"
 
 # Merge clusters to original Chironomid dataset (pre-alignment filter)
 # Every record of every BIN will now have a defined "superBIN"!
-dfChironomidSBIN <- merge(dfChironomidAll, clustSingle45, by.x ="bin_uri", by.y ="rn")
+dfChironomidSBIN <- merge(dfChironomidAll, clustSingle4, by.x ="bin_uri", by.y ="rn")
 
 ############
 # Taxonomy Curation of Greenland (Elisabeth's revisions to Greenland species)
@@ -352,7 +341,7 @@ dfChironomidSBIN <- merge(dfChironomidAll, clustSingle45, by.x ="bin_uri", by.y 
 
 # Read in Elizabeths csv file for Greenland (modified to incorporate her revisions) -
 # Certain species removed that were misclassified
-dfSpeciesEdit <- read_csv("Greenland_records_chironomid.csv")
+dfSpeciesEdit <- read_csv("Greenland records chironomid (1).csv")
 colnames(dfSpeciesEdit)[1] <- "col_1"
 splitSpecies <- foreach(i=1:nrow(dfSpeciesEdit)) %do% strsplit(dfSpeciesEdit$col_1[i], ",")
 # Convert to dataframe format
@@ -372,7 +361,7 @@ containGreenland <- which(dfChironomidAll$globalRegion=="Greenland")
 dfGreenlandBIN <- dfChironomidAll[containGreenland,]
 
 # Extract out bad species names for Greenland before using for species level analyses
-# dfGreenlandBIN <- subset(dfGreenlandBIN, species_name %in% dfSplitSpecies$V3)
+dfGreenlandBIN <- subset(dfGreenlandBIN, species_name %in% dfSplitSpecies$V3)
 
 containNearctic <- which(dfChironomidAll$globalRegion=="Nearctic")
 dfNearcticBIN <- dfChironomidAll[containNearctic,]
@@ -391,17 +380,82 @@ containPalearcticSBIN <-  which(dfChironomidSBIN$globalRegion=="Palearctic")
 dfPalearcticSBIN <- dfChironomidSBIN[containPalearcticSBIN,]
 
 #############
+# Accumulation Curve (Site based)
+
+# For site based analysis
+dfChironomidAll$site <- paste0(round(dfChironomidAll$latNum, 1), "_", round(dfChironomidAll$lonNum, 1), sep=" ")  
+
+# Break down by region
+containGreenlandAll <- which(dfChironomidAll$globalRegion=="Greenland")
+dfGSubset_SiteAll <- dfChironomidAll[containGreenlandAll,]
+
+containNearcticAll <- which(dfChironomidAll$globalRegion=="Nearctic")
+dfNSubset_SiteAll <- dfChironomidAll[containNearcticAll,]
+
+containPalearcticAll <-  which(dfChironomidAll$globalRegion=="Palearctic")
+dfPSubset_SiteAll <- dfChironomidAll[containPalearcticAll,]
+
+# Group by both bin and site
+dfGSubset_SiteAll <- dfGSubset_SiteAll %>%
+  group_by(bin_uri, site) %>%
+  summarise(count=n()) %>%
+  spread(key = bin_uri, value = count)
+dfGSubset_SiteAll[is.na(dfGSubset_SiteAll)] <- 0
+dfGSubset_SiteAll1 <- dfGSubset_SiteAll[,-1]
+
+dfPSubset_SiteAll <- dfPSubset_SiteAll %>%
+  group_by(bin_uri, site) %>%
+  summarise(count=n()) %>%
+  spread(key = bin_uri, value = count)
+dfPSubset_SiteAll[is.na(dfPSubset_SiteAll)] <- 0
+dfPSubset_SiteAll1 <- dfPSubset_SiteAll[,-1]
+
+dfNSubset_SiteAll <- dfNSubset_SiteAll %>%
+  group_by(bin_uri, site) %>%
+  summarise(count=n()) %>%
+  spread(key = bin_uri, value = count)
+dfNSubset_SiteAll[is.na(dfNSubset_SiteAll)] <- 0
+dfNSubset_SiteAll1 <- dfNSubset_SiteAll[,-1]
+
+# specaccum for each of greenland, nearctic and palearctic
+specaccumG <- specaccum(dfGSubset_SiteAll1, permutations = 100)
+specaccumP <- specaccum(dfPSubset_SiteAll1, permutations = 100)
+specaccumN <- specaccum(dfNSubset_SiteAll1, permutations = 100)
+
+# extract elements from specaccum function
+dfAccG <- data.frame(specaccumG$sites)
+dfAccG$richness <- specaccumG$richness
+
+dfAccP <- data.frame(specaccumP$sites)
+dfAccP$richness <- specaccumP$richness
+
+dfAccN <- data.frame(specaccumN$sites)
+dfAccN$richness <- specaccumN$richness
+
+# Export csv's for import into plotly for creation of acc curve:
+write.csv(dfAccG, file = "AccDataG.csv")
+write.csv(dfAccP, file = "AccDataP.csv")
+write.csv(dfAccN, file = "AccDataN.csv")
+
+#############
 # Dplyr/Tidyr and Vegan Analyses - BIN, SBIN and Species level analyses
+dfNSubset_Site <- (dfNearcticSite[,c("globalRegion","siteSize")])
+dfPSubset_Site <- (dfPalearcticSite[,c("globalRegion","siteSize")])
+dfGSubset_Site <- (dfGreenlandSite[,c("globalRegion","siteSize")])
+
+dfNSubset_BIN <- (dfNearcticBIN[,c("globalRegion","bin_uri")])
+dfPSubset_BIN <- (dfPalearcticBIN[,c("globalRegion","bin_uri")])
+dfGSubset_BIN <- (dfGreenlandBIN[,c("globalRegion","bin_uri")])
 
 # First separate bin_uri and global region from other columns
 dfNSubset_BIN <- (dfNearcticBIN[,c("globalRegion","bin_uri")])
 dfPSubset_BIN <- (dfPalearcticBIN[,c("globalRegion","bin_uri")])
 dfGSubset_BIN <- (dfGreenlandBIN[,c("globalRegion","bin_uri")])
 
-# Or separate by SBIN - 4.5%
-dfNSubset_SBIN <- (dfNearcticSBIN[,c("globalRegion","cluster_45")])
-dfPSubset_SBIN <- (dfPalearcticSBIN[,c("globalRegion","cluster_45")])
-dfGSubset_SBIN <- (dfGreenlandSBIN[,c("globalRegion","cluster_45")])
+# Or separate by SBIN - 4%
+dfNSubset_SBIN <- (dfNearcticSBIN[,c("globalRegion","cluster_4")])
+dfPSubset_SBIN <- (dfPalearcticSBIN[,c("globalRegion","cluster_4")])
+dfGSubset_SBIN <- (dfGreenlandSBIN[,c("globalRegion","cluster_4")])
 
 # Separate by species 
 dfNSubset_Sp <- (dfNearcticSBIN[,c("globalRegion","species_name")])
@@ -414,9 +468,9 @@ palearcticGroup_BIN <- group_by(dfPSubset_BIN, bin_uri)
 greenlandGroup_BIN <- group_by(dfGSubset_BIN, bin_uri)
 
 # Group by SBIN
-nearcticGroup_SBIN <- group_by(dfNSubset_SBIN, cluster_45)
-palearcticGroup_SBIN <- group_by(dfPSubset_SBIN, cluster_45)
-greenlandGroup_SBIN <- group_by(dfGSubset_SBIN, cluster_45)
+nearcticGroup_SBIN <- group_by(dfNSubset_SBIN, cluster_4)
+palearcticGroup_SBIN <- group_by(dfPSubset_SBIN, cluster_4)
+greenlandGroup_SBIN <- group_by(dfGSubset_SBIN, cluster_4)
 
 # Group by species
 nearcticGroup_Sp <- group_by(dfNSubset_Sp, species_name)
@@ -477,7 +531,7 @@ countsAll_Sp <- rbind(countsN_Sp, countsP_Sp, countsG_Sp)
 
 # First converting to the right format using tidyr
 counts_spread_BIN <- spread(countsAll_BIN, key = bin_uri, value = count)
-counts_spread_SBIN <- spread(countsAll_SBIN, key = cluster_45, value = count)
+counts_spread_SBIN <- spread(countsAll_SBIN, key = cluster_4, value = count)
 counts_spread_Sp <- spread(countsAll_Sp, key = species_name, value = count)
 
 # If NA in a cell - assign a 0
@@ -508,52 +562,73 @@ chaoSp
 ################
 # Mapping with plotly (BINs)
 
-# New dataframe for filtered by subarctic
-dfChironomidMap <- ChironomidAll
-# Not filtred by subarctic
-dfChironomidNonArctic <- dfChironomidFilter
+# Mapping with site 
 
-containGreenland1 <- which(dfChironomidNonArctic$globalRegion=="Greenland")
-dfGreenlandBIN1 <- dfChironomidNonArctic[containGreenland1,]
+# round to 1 decimal for lat/lon
+dfNonArctic <- dfChironomidAll[-withinPoly,]
+dfSubArctic <- dfChironomidFilter
 
-containNearctic1 <- which(dfChironomidNonArctic$globalRegion=="Nearctic")
-dfNearcticBIN1 <- dfChironomidNonArctic[containNearctic1,]
+dfNonArctic$site <- paste0(round(dfNonArctic$latNum, 1), "_", round(dfNonArctic$lonNum, 1), sep=" ")  
+dfSubArctic$site <- paste0(round(dfSubArctic$latNum, 1), "_", round(dfSubArctic$lonNum, 1), sep=" ")  
+  
+# Break down by site (list per site)
+siteListS <- lapply(unique(dfSubArctic$site), function(x) 
+  dfSubArctic[dfSubArctic$site == x,])  
+  
+siteListN <- lapply(unique(dfNonArctic$site), function(x) 
+  dfNonArctic[dfNonArctic$site == x,])
 
-containPalearctic1 <-  which(dfChironomidNonArctic$globalRegion=="Palearctic")
-dfPalearcticBIN1 <- dfChironomidNonArctic[containPalearctic1,]
+# Extract useful elements from the list
+siteSizeS <- sapply( siteListS , function (x) length( x$bin_uri ) )
+siteCoordS <- sapply( siteListS , function (x) unique( x$site ) )
+siteSplitS <- strsplit(siteCoordS, '_')
+siteLatS <- sapply(siteSplitS, function(x) x[1])
+siteLonS <- sapply(siteSplitS, function(x) x[2])
+siteRegionS <- sapply( siteListS , function (x) unique( x$globalRegion ) )
 
-containGreenland2 <- which(dfChironomidMap$globalRegion=="Greenland")
-dfGreenlandBIN2 <- dfChironomidMap[containGreenland2,]
+siteSizeN <- sapply( siteListN , function (x) length( x$bin_uri ) )
+siteCoordN <- sapply( siteListN , function (x) unique( x$site ) )
+siteSplitN <- strsplit(siteCoordN, '_')
+siteLatN <- sapply(siteSplitN, function(x) x[1])
+siteLonN <- sapply(siteSplitN, function(x) x[2])
+siteRegionN <- sapply( siteListN , function (x) unique( x$globalRegion ) )
 
-containNearctic2 <- which(dfChironomidMap$globalRegion=="Nearctic")
-dfNearcticBIN2 <- dfChironomidMap[containNearctic2,]
+dfSiteS <- data.frame(siteSizeS)
+dfSiteS$CoordS <- as.character(siteCoordS)
+dfSiteS$lat <- as.numeric(siteLatS)
+dfSiteS$lon <- as.numeric(siteLonS)
+dfSiteS$region <- as.character(siteRegionS)
+dfSiteS$log_transform <- round(log(dfSiteS$siteSizeS) + 1, 1)
 
-containPalearctic2 <-  which(dfChironomidMap$globalRegion=="Palearctic")
-dfPalearcticBIN2 <- dfChironomidMap[containPalearctic2,]
+dfSiteN <- data.frame(siteSizeN)
+dfSiteN$CoordN <- as.character(siteCoordN)
+dfSiteN$lat <- as.numeric(siteLatN)
+dfSiteN$lon <- as.numeric(siteLonN)
+dfSiteN$region <- as.character(siteRegionN)
+dfSiteN$log_transform <- round(log(dfSiteN$siteSizeN) + 1, 1)
 
-# Using only region and lat/lon values
-dfGMap1 <- (dfGreenlandBIN1[,c("globalRegion","latNum","lonNum")])
-dfNMap1 <- (dfNearcticBIN1[,c("globalRegion","latNum","lonNum")])
-dfPMap1 <- (dfPalearcticBIN1[,c("globalRegion","latNum","lonNum")])
-dfGMap2 <- (dfGreenlandBIN2[,c("globalRegion","latNum","lonNum")])
-dfNMap2 <- (dfNearcticBIN2[,c("globalRegion","latNum","lonNum")])
-dfPMap2 <- (dfPalearcticBIN2[,c("globalRegion","latNum","lonNum")])
-dfGMap3 <- rbind(dfGMap1, dfGMap2)
+containGreenland <- which(dfSiteS$region=="Greenland")
+dfGreenlandBIN <- dfSiteS[containGreenland,]
 
-# delete duplicates - otherwise will overload plotly
-dfGMap3 <- dfGMap3[!(duplicated(dfGMap3[c("latNum","lonNum")])), ]
-dfNMap1 <- dfNMap1[!(duplicated(dfNMap1[c("latNum","lonNum")])), ]
-dfNMap2 <- dfNMap2[!(duplicated(dfNMap2[c("latNum","lonNum")])), ]
-dfPMap1 <- dfPMap1[!(duplicated(dfPMap1[c("latNum","lonNum")])), ]
-dfPMap2 <- dfPMap2[!(duplicated(dfPMap2[c("latNum","lonNum")])), ]
+containNearctic1 <- which(dfSiteS$region=="Nearctic")
+dfNearcticBIN1 <- dfSiteS[containNearctic1,]
+
+containPalearctic1 <-  which(dfSiteS$region=="Palearctic")
+dfPalearcticBIN1 <- dfSiteS[containPalearctic1,]
+
+containNearctic2 <- which(dfSiteN$region=="Nearctic")
+dfNearcticBIN2 <- dfSiteN[containNearctic2,]
+
+containPalearctic2 <-  which(dfSiteN$region=="Palearctic")
+dfPalearcticBIN2 <- dfSiteN[containPalearctic2,]
 
 # Export csv's for import into plotly for further formatting of the map
 # on the plotly server:
-write.csv(dfGMap3, file = "GMap3.csv")
-write.csv(dfNMap1, file = "NMap1.csv")
-write.csv(dfPMap1, file = "PMap1.csv")
-write.csv(dfNMap2, file = "NMap2.csv")
-write.csv(dfPMap2, file = "PMap2.csv")
+write.csv(dfGreenlandBIN, file = "GMap.csv")
+write.csv(dfPalearcticBIN1, file = "PMap1.csv")
+write.csv(dfPalearcticBIN2, file = "PMap2.csv")
+write.csv(dfNearcticBIN1, file = "NMap1.csv")
+write.csv(dfNearcticBIN2, file = "NMap2.csv")
 
 ##############
 # Venn Diagram Calculations
@@ -584,18 +659,18 @@ G_Sp <- length((unique(dfGreenlandBIN$species_name))) - (GN_Sp + GP_Sp + GPN_Sp)
 N_Sp <- length(unique(dfNearcticBIN$species_name)) - (GN_Sp + NP_Sp + GPN_Sp)
 P_Sp <- length(unique(dfPalearcticBIN$species_name)) - (GP_Sp + NP_Sp + GPN_Sp)
 
-# Venn Diagram of SBINs at 4.5%
+# Venn Diagram of SBINs at 4%
 
 # Counts for each overlap region
-GPN_SBIN <- length(intersect(intersect(dfGreenlandSBIN$cluster_45, dfPalearcticSBIN$cluster_45), dfNearcticSBIN$cluster_45))
-GN_SBIN <- length(intersect(dfGreenlandSBIN$cluster_45, dfNearcticSBIN$cluster_45)) - GPN_SBIN
-GP_SBIN <- length(intersect(dfGreenlandSBIN$cluster_45, dfPalearcticSBIN$cluster_45)) - GPN_SBIN
-NP_SBIN <- length(intersect(dfNearcticSBIN$cluster_45, dfPalearcticSBIN$cluster_45)) - GPN_SBIN
+GPN_SBIN <- length(intersect(intersect(dfGreenlandSBIN$cluster_4, dfPalearcticSBIN$cluster_4), dfNearcticSBIN$cluster_4))
+GN_SBIN <- length(intersect(dfGreenlandSBIN$cluster_4, dfNearcticSBIN$cluster_4)) - GPN_SBIN
+GP_SBIN <- length(intersect(dfGreenlandSBIN$cluster_4, dfPalearcticSBIN$cluster_4)) - GPN_SBIN
+NP_SBIN <- length(intersect(dfNearcticSBIN$cluster_4, dfPalearcticSBIN$cluster_4)) - GPN_SBIN
 
 # Counts for each circle
-G_SBIN <- length((unique(dfGreenlandSBIN$cluster_45))) - (GN_SBIN + GP_SBIN + GPN_SBIN)
-N_SBIN <- length(unique(dfNearcticSBIN$cluster_45)) - (GN_SBIN + NP_SBIN + GPN_SBIN)
-P_SBIN <- length(unique(dfPalearcticSBIN$cluster_45)) - (GP_SBIN + NP_SBIN + GPN_SBIN)
+G_SBIN <- length((unique(dfGreenlandSBIN$cluster_4))) - (GN_SBIN + GP_SBIN + GPN_SBIN)
+N_SBIN <- length(unique(dfNearcticSBIN$cluster_4)) - (GN_SBIN + NP_SBIN + GPN_SBIN)
+P_SBIN <- length(unique(dfPalearcticSBIN$cluster_4)) - (GP_SBIN + NP_SBIN + GPN_SBIN)
 
 # Using these counts in this shiny app that makes Venn diagrams:
 # http://jolars.co/eulerr/
