@@ -665,6 +665,64 @@ pRegion
 # Sys.setenv("plotly_username"="") 
 # Sys.setenv("plotly_api_key"="")
 
+##############
+# Accumulation Curve (Site based)
+
+# For site based analysis
+dfChironomidAll$site <- paste0(round(dfChironomidAll$latNum, 1), "_", round(dfChironomidAll$lonNum, 1), sep=" ")  
+
+# Break down by region
+containGreenlandAll <- which(dfChironomidAll$globalRegion=="Greenland")
+dfGSubset_SiteAll <- dfChironomidAll[containGreenlandAll,]
+
+containNearcticAll <- which(dfChironomidAll$globalRegion=="Nearctic")
+dfNSubset_SiteAll <- dfChironomidAll[containNearcticAll,]
+
+containPalearcticAll <-  which(dfChironomidAll$globalRegion=="Palearctic")
+dfPSubset_SiteAll <- dfChironomidAll[containPalearcticAll,]
+
+# Group by both bin and site
+dfGSubset_SiteAll <- dfGSubset_SiteAll %>%
+  group_by(bin_uri, site) %>%
+  summarise(count=n()) %>%
+  spread(key = bin_uri, value = count)
+dfGSubset_SiteAll[is.na(dfGSubset_SiteAll)] <- 0
+dfGSubset_SiteAll1 <- dfGSubset_SiteAll[,-1]
+
+dfPSubset_SiteAll <- dfPSubset_SiteAll %>%
+  group_by(bin_uri, site) %>%
+  summarise(count=n()) %>%
+  spread(key = bin_uri, value = count)
+dfPSubset_SiteAll[is.na(dfPSubset_SiteAll)] <- 0
+dfPSubset_SiteAll1 <- dfPSubset_SiteAll[,-1]
+
+dfNSubset_SiteAll <- dfNSubset_SiteAll %>%
+  group_by(bin_uri, site) %>%
+  summarise(count=n()) %>%
+  spread(key = bin_uri, value = count)
+dfNSubset_SiteAll[is.na(dfNSubset_SiteAll)] <- 0
+dfNSubset_SiteAll1 <- dfNSubset_SiteAll[,-1]
+
+# specaccum for each of greenland, nearctic and palearctic
+specaccumG <- specaccum(dfGSubset_SiteAll1, permutations = 100)
+specaccumP <- specaccum(dfPSubset_SiteAll1, permutations = 100)
+specaccumN <- specaccum(dfNSubset_SiteAll1, permutations = 100)
+
+# extract elements from specaccum function
+dfAccG <- data.frame(specaccumG$sites)
+dfAccG$richness <- specaccumG$richness
+
+dfAccP <- data.frame(specaccumP$sites)
+dfAccP$richness <- specaccumP$richness
+
+dfAccN <- data.frame(specaccumN$sites)
+dfAccN$richness <- specaccumN$richness
+
+# Export csv's for import into plotly for creation of acc curve:
+write.csv(dfAccG, file = "AccDataG.csv")
+write.csv(dfAccP, file = "AccDataP.csv")
+write.csv(dfAccN, file = "AccDataN.csv")
+
 #############
 # Greenland East/West Division Dissimilarity Measure - BINs only (not used in first submission)
 
